@@ -31,7 +31,6 @@ var Selectize = function($input, settings) {
 		isCmdDown        : false,
 		isCtrlDown       : false,
 		ignoreFocus      : false,
-		ignoreBlur       : false,
 		ignoreHover      : false,
 		hasOptions       : false,
 		currentResults   : null,
@@ -202,7 +201,7 @@ $.extend(Selectize.prototype, {
 			keypress  : function() { return self.onKeyPress.apply(self, arguments); },
 			resize    : function() { self.positionDropdown.apply(self, []); },
 			blur      : function() { return self.onBlur.apply(self, arguments); },
-			focus     : function() { self.ignoreBlur = false; return self.onFocus.apply(self, arguments); },
+			focus     : function() { return self.onFocus.apply(self, arguments); },
 			paste     : function() { return self.onPaste.apply(self, arguments); }
 		});
 
@@ -226,7 +225,7 @@ $.extend(Selectize.prototype, {
 				}
 				// blur on click outside
 				if (!self.$control.has(e.target).length && e.target !== self.$control[0]) {
-					self.blur(e.target);
+					self.close();
 				}
 			}
 		});
@@ -625,15 +624,21 @@ $.extend(Selectize.prototype, {
 	 */
 	onBlur: function(e, dest) {
 		var self = this;
+		
+		if (document.activeElement === self.$dropdown_content[0]) {
+			// necessary to prevent IE closing the dropdown when the scrollbar is clicked
+			if (e) {
+				e.preventDefault();
+				e.stopImmediatePropagation();
+			}
+			self.onFocus(e);			
+			return;
+		}		
+		
 		if (!self.isFocused) return;
 		self.isFocused = false;
 
 		if (self.ignoreFocus) {
-			return;
-		} else if (!self.ignoreBlur && document.activeElement === self.$dropdown_content[0]) {
-			// necessary to prevent IE closing the dropdown when the scrollbar is clicked
-			self.ignoreBlur = true;
-			self.onFocus(e);
 			return;
 		}
 
